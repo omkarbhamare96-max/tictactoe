@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Tic-Tac-Toe</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: #0b1120;
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* NEON TYPOGRAPHY */
+        h1 {
+            font-size: 42px;
+            font-weight: 900;
+            letter-spacing: 4px;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+        }
+        .text-x { color: #00f2fe; text-shadow: 0 0 15px rgba(0, 242, 254, 0.8); }
+        .text-o { color: #fffb00; text-shadow: 0 0 15px rgba(255, 251, 0, 0.8); }
+
+        /* SCOREBOARD */
+        .scoreboard {
+            display: flex;
+            gap: 40px;
+            background: rgba(15, 23, 42, 0.8);
+            padding: 15px 40px;
+            border-radius: 50px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        .score-box { text-align: center; }
+        .score-label { font-size: 12px; color: #64748b; letter-spacing: 2px; font-weight: bold; margin-bottom: 4px; }
+        .score-val { font-size: 28px; font-weight: 900; }
+
+        /* THE GRID */
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-template-rows: repeat(3, 100px);
+            gap: 12px;
+            background: #1e293b;
+            padding: 12px;
+            border-radius: 16px;
+            box-shadow: 0 0 40px rgba(0, 242, 254, 0.1);
+            border: 1px solid rgba(0, 242, 254, 0.2);
+        }
+        .cell {
+            background: #0f172a;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 64px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        }
+        .cell:hover { background: #1a2235; transform: scale(0.98); }
+        .cell.taken { cursor: default; transform: none; background: #0f172a; }
+
+        /* POP ANIMATIONS FOR PIECES */
+        .piece {
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* STATUS AND BUTTONS */
+        .status {
+            margin-top: 30px;
+            font-size: 18px;
+            font-weight: 700;
+            height: 24px;
+            letter-spacing: 1px;
+            color: #94a3b8;
+        }
+        .reset-btn {
+            margin-top: 20px;
+            background: transparent;
+            border: 2px solid #334155;
+            color: #cbd5e1;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .reset-btn:hover { background: #334155; color: white; }
+        
+        /* WIN HIGHLIGHT */
+        .win-cell { background: rgba(0, 242, 254, 0.15) !important; box-shadow: inset 0 0 20px rgba(0, 242, 254, 0.4); }
+    </style>
+</head>
+<body>
+
+    <h1><span class="text-x">TIC</span> TAC <span class="text-o">TOE</span></h1>
+
+    <div class="scoreboard">
+        <div class="score-box">
+            <div class="score-label">YOU (X)</div>
+            <div class="score-val text-x" id="scoreX">0</div>
+        </div>
+        <div class="score-box">
+            <div class="score-label">TIES</div>
+            <div class="score-val" id="scoreTies" style="color: #94a3b8;">0</div>
+        </div>
+        <div class="score-box">
+            <div class="score-label">AI (O)</div>
+            <div class="score-val text-o" id="scoreO">0</div>
+        </div>
+    </div>
+
+    <div class="board" id="board">
+        </div>
+
+    <div class="status" id="status">YOUR TURN</div>
+    <button class="reset-btn" onclick="resetBoard()">PLAY AGAIN</button>
+
+<script>
+    // --- GAME STATE ---
+    let board = ['', '', '', '', '', '', '', '', ''];
+    let human = 'X';
+    let ai = 'O';
+    let gameActive = true;
+    let scores = { X: 0, O: 0, Ties: 0 };
+
+    const winConditions = [
+        [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
+        [0, 3, 6], [1, 4, 7], [2, 5, 8], // Cols
+        [0, 4, 8], [2, 4, 6]             // Diagonals
+    ];
+
+    // --- INITIALIZE UI ---
+    const boardElement = document.getElementById('board');
+    const statusElement = document.getElementById('status');
+
+    function createBoard() {
+        boardElement.innerHTML = '';
+        for (let i = 0; i < 9; i++) {
+            const cell = document.createElement('div');
+            cell.classList.add('cell');
+            cell.setAttribute('data-index', i);
+            cell.addEventListener('click', handleCellClick);
+            boardElement.appendChild(cell);
+        }
+    }
+
+    // --- GAME LOGIC ---
+    function handleCellClick(e) {
+        const index = e.target.getAttribute('data-index');
+        
+        // If cell is taken or game is over, do nothing
+        if (board[index] !== '' || !gameActive) return;
+
+        // Human Turn
+        makeMove(index, human);
+        
+        if (!checkGameOver()) {
+            statusElement.innerText = "AI IS THINKING...";
+            gameActive = false; // Lock board while AI thinks
+            
+            // Artificial delay to make AI feel real
+            setTimeout(() => {
+                let aiMove = bestMove();
+                makeMove(aiMove, ai);
+                checkGameOver();
+                if(gameActive) statusElement.innerText = "YOUR TURN";
+            }, 500);
+        }
+    }
+
+    function makeMove(index, player) {
+        board[index] = player;
+        const cell = document.querySelector(`.cell[data-index="${index}"]`);
+        cell.classList.add('taken');
+        
+        // Create the glowing text element
+        const span = document.createElement('span');
+        span.innerText = player;
+        span.classList.add('piece');
+        span.classList.add(player === 'X' ? 'text-x' : 'text-o');
+        cell.appendChild(span);
+    }
+
+    // --- WIN/LOSS CHECKER ---
+    function checkGameOver() {
+        let roundWon = false;
+        let winningCells = [];
+
+        // Check for winner
+        for (let i = 0; i < winConditions.length; i++) {
+            const [a, b, c] = winConditions[i];
+            if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+                roundWon = true;
+                winningCells = [a, b, c];
+                break;
+            }
+        }
+
+        if (roundWon) {
+            let winner = board[winningCells[0]];
+            highlightWinningCells(winningCells);
+            statusElement.innerHTML = winner === human ? `<span class="text-x">YOU WIN!</span>` : `<span class="text-o">AI WINS!</span>`;
+            scores[winner]++;
+            updateScoreboard();
+            gameActive = false;
+            return true;
+        }
+
+        // Check for Tie
+        if (!board.includes('')) {
+            statusElement.innerText = "IT'S A TIE!";
+            scores.Ties++;
+            updateScoreboard();
+            gameActive = false;
+            return true;
+        }
+
+        return false;
+    }
+
+    function highlightWinningCells(cells) {
+        cells.forEach(index => {
+            document.querySelector(`.cell[data-index="${index}"]`).classList.add('win-cell');
+        });
+    }
+
+    function updateScoreboard() {
+        document.getElementById('scoreX').innerText = scores.X;
+        document.getElementById('scoreO').innerText = scores.O;
+        document.getElementById('scoreTies').innerText = scores.Ties;
+    }
+
+    function resetBoard() {
+        board = ['', '', '', '', '', '', '', '', ''];
+        gameActive = true;
+        statusElement.innerText = "YOUR TURN";
+        createBoard();
+    }
+
+    // --- THE "MINIMAX" AI (Unbeatable) ---
+    // This algorithm looks ahead at every possible future move to choose the perfect spot.
+    function bestMove() {
+        let bestScore = -Infinity;
+        let move;
+        for (let i = 0; i < 9; i++) {
+            if (board[i] === '') {
+                board[i] = ai;
+                let score = minimax(board, 0, false);
+                board[i] = '';
+                if (score > bestScore) {
+                    bestScore = score;
+                    move = i;
+                }
+            }
+        }
+        return move;
+    }
+
+    function minimax(newBoard, depth, isMaximizing) {
+        let result = checkWinnerForAI();
+        if (result !== null) {
+            if (result === ai) return 10 - depth;
+            if (result === human) return depth - 10;
+            if (result === 'tie') return 0;
+        }
+
+        if (isMaximizing) {
+            let bestScore = -Infinity;
+            for (let i = 0; i < 9; i++) {
+                if (newBoard[i] === '') {
+                    newBoard[i] = ai;
+                    let score = minimax(newBoard, depth + 1, false);
+                    newBoard[i] = '';
+                    bestScore = Math.max(score, bestScore);
+                }
+            }
+            return bestScore;
+        } else {
+            let bestScore = Infinity;
+            for (let i = 0; i < 9; i++) {
+                if (newBoard[i] === '') {
+                    newBoard[i] = human;
+                    let score = minimax(newBoard, depth + 1, true);
+                    newBoard[i] = '';
+                    bestScore = Math.min(score, bestScore);
+                }
+            }
+            return bestScore;
+        }
+    }
+
+    function checkWinnerForAI() {
+        for (let i = 0; i < winConditions.length; i++) {
+            const [a, b, c] = winConditions[i];
+            if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+                return board[a];
+            }
+        }
+        if (!board.includes('')) return 'tie';
+        return null;
+    }
+
+    // Start Game
+    createBoard();
+</script>
+
+</body>
+</html>
