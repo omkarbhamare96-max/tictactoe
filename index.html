@@ -3,155 +3,215 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neon Tic-Tac-Toe</title>
+    <title>Tic-Tac-Toe: Ranked Edition</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+        
         body {
-            background-color: #0b1120;
+            /* Vibrant Professional Gradient Background */
+            background: linear-gradient(135deg, #4f46e5 0%, #ec4899 100%);
             color: white;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
+            min-height: 100vh;
             overflow: hidden;
             user-select: none;
         }
 
-        /* NEON TYPOGRAPHY */
+        /* Glassmorphism Panels */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 24px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+            padding: 40px;
+            text-align: center;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* SCREENS */
+        #menu-screen, #game-screen {
+            position: absolute;
+            transition: opacity 0.4s, transform 0.4s;
+        }
+        .hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.95);
+        }
+
         h1 {
             font-size: 42px;
             font-weight: 900;
-            letter-spacing: 4px;
-            margin-bottom: 10px;
-            text-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+            letter-spacing: 2px;
+            margin-bottom: 5px;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
-        .text-x { color: #00f2fe; text-shadow: 0 0 15px rgba(0, 242, 254, 0.8); }
-        .text-o { color: #fffb00; text-shadow: 0 0 15px rgba(255, 251, 0, 0.8); }
+        .subtitle { color: #fdf2f8; font-weight: 600; letter-spacing: 4px; font-size: 12px; margin-bottom: 30px; }
 
-        /* SCOREBOARD */
-        .scoreboard {
-            display: flex;
-            gap: 40px;
-            background: rgba(15, 23, 42, 0.8);
-            padding: 15px 40px;
-            border-radius: 50px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            margin-bottom: 30px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        /* BUTTONS */
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            margin-bottom: 12px;
+            border-radius: 12px;
+            border: none;
+            font-size: 16px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
         }
-        .score-box { text-align: center; }
-        .score-label { font-size: 12px; color: #64748b; letter-spacing: 2px; font-weight: bold; margin-bottom: 4px; }
-        .score-val { font-size: 28px; font-weight: 900; }
+        .btn:hover { transform: translateY(-2px); background: rgba(255,255,255,0.3); box-shadow: 0 10px 20px rgba(0,0,0,0.15); }
+        .btn:active { transform: translateY(0); }
+        
+        .btn-primary { background: linear-gradient(90deg, #f59e0b, #ef4444); border: none; }
+        .btn-primary:hover { background: linear-gradient(90deg, #fbbf24, #f87171); }
 
-        /* THE GRID */
+        /* RANK DISPLAY */
+        .rank-container { margin-bottom: 25px; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 16px; }
+        .rank-title { font-size: 11px; color: #cbd5e1; letter-spacing: 2px; margin-bottom: 4px; }
+        .rank-val { font-size: 24px; font-weight: 900; color: #fbbf24; }
+        .xp-bar { height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin-top: 10px; overflow: hidden; }
+        .xp-fill { height: 100%; background: #fbbf24; width: 0%; transition: width 0.4s; }
+
+        /* GAMEPLAY UI */
+        .header-game { display: flex; justify-content: space-between; align-items: center; width: 320px; margin-bottom: 20px; }
+        .back-btn { background: transparent; border: 1px solid rgba(255,255,255,0.3); color: white; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-weight: bold; }
+        .mode-badge { background: rgba(0,0,0,0.3); padding: 6px 12px; border-radius: 12px; font-size: 12px; font-weight: bold; letter-spacing: 1px; }
+
         .board {
             display: grid;
             grid-template-columns: repeat(3, 100px);
             grid-template-rows: repeat(3, 100px);
-            gap: 12px;
-            background: #1e293b;
-            padding: 12px;
-            border-radius: 16px;
-            box-shadow: 0 0 40px rgba(0, 242, 254, 0.1);
-            border: 1px solid rgba(0, 242, 254, 0.2);
+            gap: 10px;
+            margin-bottom: 20px;
         }
         .cell {
-            background: #0f172a;
-            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 64px;
-            font-weight: bold;
+            font-size: 60px;
+            font-weight: 900;
             cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+            transition: background 0.2s;
+            box-shadow: inset 0 4px 6px rgba(0,0,0,0.1);
         }
-        .cell:hover { background: #1a2235; transform: scale(0.98); }
-        .cell.taken { cursor: default; transform: none; background: #0f172a; }
-
-        /* POP ANIMATIONS FOR PIECES */
-        .piece {
-            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-        }
-        @keyframes popIn {
-            0% { transform: scale(0); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        /* STATUS AND BUTTONS */
-        .status {
-            margin-top: 30px;
-            font-size: 18px;
-            font-weight: 700;
-            height: 24px;
-            letter-spacing: 1px;
-            color: #94a3b8;
-        }
-        .reset-btn {
-            margin-top: 20px;
-            background: transparent;
-            border: 2px solid #334155;
-            color: #cbd5e1;
-            padding: 12px 30px;
-            border-radius: 50px;
-            font-size: 14px;
-            font-weight: bold;
-            letter-spacing: 2px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .reset-btn:hover { background: #334155; color: white; }
+        .cell:hover { background: rgba(0, 0, 0, 0.3); }
+        .cell.taken { cursor: default; }
         
-        /* WIN HIGHLIGHT */
-        .win-cell { background: rgba(0, 242, 254, 0.15) !important; box-shadow: inset 0 0 20px rgba(0, 242, 254, 0.4); }
+        .text-x { color: #fff; text-shadow: 0 0 15px rgba(255,255,255,0.8); }
+        .text-o { color: #fbcfe8; text-shadow: 0 0 15px rgba(244,114,182,0.8); }
+
+        .piece { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+        .status { font-size: 18px; font-weight: 800; letter-spacing: 1px; height: 24px; color: #fdf2f8; margin-bottom: 15px; }
+        .win-cell { background: rgba(251, 191, 36, 0.3) !important; box-shadow: inset 0 0 20px rgba(251, 191, 36, 0.5); }
     </style>
 </head>
 <body>
 
-    <h1><span class="text-x">TIC</span> TAC <span class="text-o">TOE</span></h1>
+    <div id="menu-screen" class="glass-panel">
+        <h1>TIC TAC TOE</h1>
+        <div class="subtitle">COMPETITIVE EDITION</div>
 
-    <div class="scoreboard">
-        <div class="score-box">
-            <div class="score-label">YOU (X)</div>
-            <div class="score-val text-x" id="scoreX">0</div>
+        <div class="rank-container">
+            <div class="rank-title">CURRENT RANK</div>
+            <div class="rank-val" id="rank-display">BRONZE</div>
+            <div style="font-size: 11px; margin-top: 4px;" id="xp-text">0 XP</div>
+            <div class="xp-bar"><div class="xp-fill" id="xp-bar-fill"></div></div>
         </div>
-        <div class="score-box">
-            <div class="score-label">TIES</div>
-            <div class="score-val" id="scoreTies" style="color: #94a3b8;">0</div>
-        </div>
-        <div class="score-box">
-            <div class="score-label">AI (O)</div>
-            <div class="score-val text-o" id="scoreO">0</div>
-        </div>
+
+        <button class="btn btn-primary" onclick="startGame('ranked')">🏆 PLAY RANKED MATCH</button>
+        <div style="margin: 20px 0; font-size: 12px; font-weight: bold; color: rgba(255,255,255,0.6);">CASUAL MODES</div>
+        <button class="btn" onclick="startGame('easy')">EASY (Practice)</button>
+        <button class="btn" onclick="startGame('medium')">MEDIUM</button>
+        <button class="btn" onclick="startGame('hard')">HARD (Unbeatable)</button>
     </div>
 
-    <div class="board" id="board">
+    <div id="game-screen" class="glass-panel hidden">
+        <div class="header-game">
+            <button class="back-btn" onclick="returnToMenu()">← MENU</button>
+            <div class="mode-badge" id="mode-display">RANKED</div>
         </div>
 
-    <div class="status" id="status">YOUR TURN</div>
-    <button class="reset-btn" onclick="resetBoard()">PLAY AGAIN</button>
+        <div class="board" id="board"></div>
+
+        <div class="status" id="status">YOUR TURN</div>
+        <button class="btn" id="rematch-btn" style="display: none;" onclick="resetBoard()">PLAY AGAIN</button>
+    </div>
 
 <script>
+    // --- RANK & XP SYSTEM ---
+    let playerXP = parseInt(localStorage.getItem('tictactoe_xp')) || 0;
+    
+    function getRank(xp) {
+        if (xp < 100) return { name: 'BRONZE', color: '#cd7f32', next: 100 };
+        if (xp < 300) return { name: 'SILVER', color: '#cbd5e1', next: 300 };
+        if (xp < 600) return { name: 'GOLD', color: '#fbbf24', next: 600 };
+        return { name: 'DIAMOND', color: '#38bdf8', next: 1000 }; // Max rank effectively
+    }
+
+    function updateRankUI() {
+        const rank = getRank(playerXP);
+        document.getElementById('rank-display').innerText = rank.name;
+        document.getElementById('rank-display').style.color = rank.color;
+        document.getElementById('xp-text').innerText = `${playerXP} / ${rank.next} XP`;
+        
+        // Calculate progress percentage for current tier
+        let prevTierXP = 0;
+        if(playerXP >= 600) prevTierXP = 600;
+        else if(playerXP >= 300) prevTierXP = 300;
+        else if(playerXP >= 100) prevTierXP = 100;
+        
+        let progress = ((playerXP - prevTierXP) / (rank.next - prevTierXP)) * 100;
+        document.getElementById('xp-bar-fill').style.width = `${Math.min(100, Math.max(0, progress))}%`;
+    }
+
     // --- GAME STATE ---
     let board = ['', '', '', '', '', '', '', '', ''];
     let human = 'X';
     let ai = 'O';
-    let gameActive = true;
-    let scores = { X: 0, O: 0, Ties: 0 };
-
+    let gameActive = false;
+    let currentMode = 'easy'; // easy, medium, hard, ranked
+    
     const winConditions = [
-        [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
-        [0, 3, 6], [1, 4, 7], [2, 5, 8], // Cols
-        [0, 4, 8], [2, 4, 6]             // Diagonals
+        [0, 1, 2], [3, 4, 5], [6, 7, 8],
+        [0, 3, 6], [1, 4, 7], [2, 5, 8],
+        [0, 4, 8], [2, 4, 6]
     ];
 
-    // --- INITIALIZE UI ---
     const boardElement = document.getElementById('board');
     const statusElement = document.getElementById('status');
+    const rematchBtn = document.getElementById('rematch-btn');
 
+    // --- SCREEN TRANSITIONS ---
+    function startGame(mode) {
+        currentMode = mode;
+        document.getElementById('mode-display').innerText = mode.toUpperCase();
+        document.getElementById('menu-screen').classList.add('hidden');
+        document.getElementById('game-screen').classList.remove('hidden');
+        resetBoard();
+    }
+
+    function returnToMenu() {
+        updateRankUI();
+        document.getElementById('game-screen').classList.add('hidden');
+        document.getElementById('menu-screen').classList.remove('hidden');
+    }
+
+    // --- BOARD SETUP ---
     function createBoard() {
         boardElement.innerHTML = '';
         for (let i = 0; i < 9; i++) {
@@ -163,27 +223,39 @@
         }
     }
 
-    // --- GAME LOGIC ---
+    function resetBoard() {
+        board = ['', '', '', '', '', '', '', '', ''];
+        gameActive = true;
+        statusElement.innerText = "YOUR TURN";
+        statusElement.style.color = "#fdf2f8";
+        rematchBtn.style.display = 'none';
+        createBoard();
+    }
+
+    // --- GAMEPLAY LOGIC ---
     function handleCellClick(e) {
         const index = e.target.getAttribute('data-index');
         
-        // If cell is taken or game is over, do nothing
         if (board[index] !== '' || !gameActive) return;
 
-        // Human Turn
+        // Player Move
         makeMove(index, human);
         
         if (!checkGameOver()) {
             statusElement.innerText = "AI IS THINKING...";
-            gameActive = false; // Lock board while AI thinks
+            gameActive = false; // Lock board
             
-            // Artificial delay to make AI feel real
             setTimeout(() => {
-                let aiMove = bestMove();
+                let aiMove = getAIMove();
                 makeMove(aiMove, ai);
-                checkGameOver();
-                if(gameActive) statusElement.innerText = "YOUR TURN";
-            }, 500);
+                let isGameOver = checkGameOver();
+                
+                // THE FIX: Only unlock the board if the game isn't over!
+                if (!isGameOver) {
+                    gameActive = true;
+                    statusElement.innerText = "YOUR TURN";
+                }
+            }, 600);
         }
     }
 
@@ -192,7 +264,6 @@
         const cell = document.querySelector(`.cell[data-index="${index}"]`);
         cell.classList.add('taken');
         
-        // Create the glowing text element
         const span = document.createElement('span');
         span.innerText = player;
         span.classList.add('piece');
@@ -200,64 +271,93 @@
         cell.appendChild(span);
     }
 
-    // --- WIN/LOSS CHECKER ---
+    // --- AI DIFFICULTY LOGIC ---
+    function getAIMove() {
+        let available = board.map((v, i) => v === '' ? i : null).filter(v => v !== null);
+        
+        if (currentMode === 'easy') {
+            // 100% Random
+            return available[Math.floor(Math.random() * available.length)];
+        } 
+        else if (currentMode === 'medium') {
+            // 40% chance to make a random sub-optimal move
+            if (Math.random() < 0.4) {
+                return available[Math.floor(Math.random() * available.length)];
+            } else {
+                return bestMove(); // 60% chance to play perfectly
+            }
+        } 
+        else {
+            // Hard & Ranked: 100% Perfect Minimax
+            return bestMove();
+        }
+    }
+
+    // --- WIN / TIE CHECKER ---
     function checkGameOver() {
         let roundWon = false;
         let winningCells = [];
 
-        // Check for winner
         for (let i = 0; i < winConditions.length; i++) {
             const [a, b, c] = winConditions[i];
             if (board[a] && board[a] === board[b] && board[a] === board[c]) {
-                roundWon = true;
-                winningCells = [a, b, c];
-                break;
+                roundWon = true; winningCells = [a, b, c]; break;
             }
         }
 
         if (roundWon) {
             let winner = board[winningCells[0]];
-            highlightWinningCells(winningCells);
-            statusElement.innerHTML = winner === human ? `<span class="text-x">YOU WIN!</span>` : `<span class="text-o">AI WINS!</span>`;
-            scores[winner]++;
-            updateScoreboard();
+            winningCells.forEach(idx => document.querySelector(`.cell[data-index="${idx}"]`).classList.add('win-cell'));
+            
+            if (winner === human) {
+                statusElement.innerHTML = `🏆 YOU WON!`;
+                statusElement.style.color = "#fbbf24";
+                handleRankUpdate("win");
+            } else {
+                statusElement.innerHTML = `💀 AI WINS!`;
+                statusElement.style.color = "#ef4444";
+                handleRankUpdate("loss");
+            }
+            
             gameActive = false;
+            rematchBtn.style.display = 'block';
             return true;
         }
 
-        // Check for Tie
         if (!board.includes('')) {
-            statusElement.innerText = "IT'S A TIE!";
-            scores.Ties++;
-            updateScoreboard();
+            statusElement.innerText = "🤝 IT'S A TIE!";
+            statusElement.style.color = "#cbd5e1";
+            handleRankUpdate("tie");
             gameActive = false;
+            rematchBtn.style.display = 'block';
             return true;
         }
 
         return false;
     }
 
-    function highlightWinningCells(cells) {
-        cells.forEach(index => {
-            document.querySelector(`.cell[data-index="${index}"]`).classList.add('win-cell');
-        });
+    // --- XP / RANKING MANAGER ---
+    function handleRankUpdate(result) {
+        if (currentMode !== 'ranked') return; // Only grant XP in Ranked mode
+        
+        let xpChange = 0;
+        if (result === "win") xpChange = 30;      // Very rare against Hard AI!
+        else if (result === "tie") xpChange = 15; // Standard outcome against perfect AI
+        else if (result === "loss") xpChange = -15;
+        
+        playerXP += xpChange;
+        if (playerXP < 0) playerXP = 0; // Don't drop below 0
+        
+        localStorage.setItem('tictactoe_xp', playerXP);
+        
+        // Show XP popup text
+        const xpText = xpChange > 0 ? `+${xpChange} XP` : `${xpChange} XP`;
+        setTimeout(() => {
+            statusElement.innerHTML += `<div style="font-size:12px; margin-top:5px; color:${xpChange>0?'#4ade80':'#f87171'}">${xpText}</div>`;
+        }, 500);
     }
 
-    function updateScoreboard() {
-        document.getElementById('scoreX').innerText = scores.X;
-        document.getElementById('scoreO').innerText = scores.O;
-        document.getElementById('scoreTies').innerText = scores.Ties;
-    }
-
-    function resetBoard() {
-        board = ['', '', '', '', '', '', '', '', ''];
-        gameActive = true;
-        statusElement.innerText = "YOUR TURN";
-        createBoard();
-    }
-
-    // --- THE "MINIMAX" AI (Unbeatable) ---
-    // This algorithm looks ahead at every possible future move to choose the perfect spot.
+    // --- MINIMAX ALGORITHM ---
     function bestMove() {
         let bestScore = -Infinity;
         let move;
@@ -266,10 +366,7 @@
                 board[i] = ai;
                 let score = minimax(board, 0, false);
                 board[i] = '';
-                if (score > bestScore) {
-                    bestScore = score;
-                    move = i;
-                }
+                if (score > bestScore) { bestScore = score; move = i; }
             }
         }
         return move;
@@ -311,16 +408,14 @@
     function checkWinnerForAI() {
         for (let i = 0; i < winConditions.length; i++) {
             const [a, b, c] = winConditions[i];
-            if (board[a] && board[a] === board[b] && board[a] === board[c]) {
-                return board[a];
-            }
+            if (board[a] && board[a] === board[b] && board[a] === board[c]) return board[a];
         }
         if (!board.includes('')) return 'tie';
         return null;
     }
 
-    // Start Game
-    createBoard();
+    // Boot Up
+    updateRankUI();
 </script>
 
 </body>
